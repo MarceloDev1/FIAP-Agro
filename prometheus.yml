@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "identity"
+    static_configs:
+      - targets: ["host.docker.internal:5124"] # porta do Identity
+  - job_name: "property"
+    static_configs:
+      - targets: ["host.docker.internal:5201"]
+  - job_name: "ingestion"
+    static_configs:
+      - targets: ["host.docker.internal:7139"]
+  - job_name: "alert-api"
+    static_configs:
+      - targets: ["host.docker.internal:PORTA_ALERT_API"]
