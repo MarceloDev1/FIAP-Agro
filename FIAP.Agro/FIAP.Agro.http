@@ -1,0 +1,6 @@
+@FIAP.Agro_HostAddress = http://localhost:5023
+
+GET {{FIAP.Agro_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,17 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/.vs
+/AlertWorker/bin/Debug/net8.0
+/AlertWorker/obj
+/FIAP.Agro/obj
+/FIAP.Agro.Alert/bin/Debug/net8.0
+/FIAP.Agro.Alert/obj
+/FIAP.Agro.Identity/bin/Debug/net8.0
+/FIAP.Agro.Identity/obj
+/FIAP.Agro.Ingestion/obj
+/FIAP.Agro.Ingestion/bin/Debug/net8.0
+/FIAP.Agro.Property/bin/Debug/net8.0
+/FIAP.Agro.Property/obj
