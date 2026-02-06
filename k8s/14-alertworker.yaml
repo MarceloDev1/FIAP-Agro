@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-worker
+  namespace: fiap-agro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alert-worker
+  template:
+    metadata:
+      labels:
+        app: alert-worker
+    spec:
+      containers:
+        - name: alert-worker
+          image: fiap-agro/alert-worker:1.0
+          env:
+            - name: ConnectionStrings__Default
+              value: "Server=sqlserver,1433;Database=FIAPAgroAlert;User Id=sa;Password=FiapAgro2026@;TrustServerCertificate=True;Encrypt=False;"
+            - name: RabbitMq__HostName
+              value: "rabbitmq"
+            - name: RabbitMq__UserName
+              value: "guest"
+            - name: RabbitMq__Password
+              value: "guest"
+            - name: RabbitMq__Queue
+              value: "sensor.readings"
