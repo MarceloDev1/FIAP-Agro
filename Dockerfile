@@ -1,8 +1,12 @@
-- name: Build and push image to ACR
-  run: |
-    az acr build \
-      --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} \
-      --registry ${{ env.AZURE_CONTAINER_REGISTRY }} \
-      --resource-group ${{ env.RESOURCE_GROUP }} \
-      --file ./FIAP.Agro/Dockerfile \
-      ./FIAP.Agro
+# Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet restore
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "FIAP.Agro.dll"]
