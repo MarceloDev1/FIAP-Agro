@@ -12,7 +12,16 @@ env:
   # Caminho do(s) manifest(s) (ajuste para o seu repo)
   # Exemplo 1: "k8s/11-property.yaml"
   # Exemplo 2: "k8s/*.yaml"
-  DEPLOYMENT_MANIFEST_PATH: "k8s/*.yaml"
+  DEPLOYMENT_MANIFEST_PATH: |
+    k8s/00-namespace.yaml
+    k8s/01-sqlserver.yaml
+    k8s/02-rabbitmq.yaml
+    k8s/03-jwt-secret.yaml
+    k8s/10-identity.yaml
+    k8s/11-property.yaml
+    k8s/12-ingestion.yaml
+    k8s/13-alertapi.yaml
+    k8s/14-alertworker.yaml
 
 jobs:
   build_and_deploy:
