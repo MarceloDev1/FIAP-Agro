@@ -1,32 +1,3 @@
-# This workflow will build and push an application to a Azure Kubernetes Service (AKS) cluster when you push your code
-#
-# This workflow assumes you have already created the target AKS cluster and have created an Azure Container Registry (ACR)
-# The ACR should be attached to the AKS cluster
-# For instructions see:
-#   - https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough-portal
-#   - https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal
-#   - https://learn.microsoft.com/en-us/azure/aks/cluster-container-registry-integration?tabs=azure-cli#configure-acr-integration-for-existing-aks-clusters
-#   - https://github.com/Azure/aks-create-action
-#
-# To configure this workflow:
-#
-# 1. Set the following secrets in your repository (instructions for getting these can be found at https://docs.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-cli%2Clinux):
-#    - AZURE_CLIENT_ID
-#    - AZURE_TENANT_ID
-#    - AZURE_SUBSCRIPTION_ID
-#
-# 2. Set the following environment variables (or replace the values below):
-#    - AZURE_CONTAINER_REGISTRY (name of your container registry / ACR)
-#    - RESOURCE_GROUP (where your cluster is deployed)
-#    - CLUSTER_NAME (name of your AKS cluster)
-#    - CONTAINER_NAME (name of the container image you would like to push up to your ACR)
-#    - IMAGE_PULL_SECRET_NAME (name of the ImagePullSecret that will be created to pull your ACR image)
-#    - DEPLOYMENT_MANIFEST_PATH (path to the manifest yaml for your deployment)
-#
-# For more information on GitHub Actions for Azure, refer to https://github.com/Azure/Actions
-# For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
-# For more options with the actions used below please refer to https://github.com/Azure/login
-
 name: Build and deploy an app to AKS
 
 on:
@@ -35,74 +6,61 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_CONTAINER_REGISTRY: "your-azure-container-registry"
-  CONTAINER_NAME: "your-container-name"
-  RESOURCE_GROUP: "your-resource-group"
-  CLUSTER_NAME: "your-cluster-name"
-  DEPLOYMENT_MANIFEST_PATH: "your-deployment-manifest-path"
+  # Nome da imagem (ajuste para o seu)
+  CONTAINER_NAME: "fiapagro"
+
+  # Caminho do(s) manifest(s) (ajuste para o seu repo)
+  # Exemplo 1: "k8s/11-property.yaml"
+  # Exemplo 2: "k8s/*.yaml"
+  DEPLOYMENT_MANIFEST_PATH: "k8s/*.yaml"
 
 jobs:
-  buildImage:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
     permissions:
       contents: read
-      id-token: write
-    runs-on: ubuntu-latest
+
     steps:
-      # Checks out the repository this file is in
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # Logs in with your Azure credentials
+      # Login no Azure usando o JSON do Service Principal
       - name: Azure login
-        uses: azure/login@v1.4.6
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Builds and pushes an image up to your Azure Container Registry
+      # Build e push da imagem no ACR
       - name: Build and push image to ACR
         run: |
-          az acr build --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} --registry ${{ env.AZURE_CONTAINER_REGISTRY }} -g ${{ env.RESOURCE_GROUP }} .
+          echo "Building and pushing to ACR..."
+          az acr build \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} \
+            --registry ${{ secrets.ACR_NAME }} \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            .
 
-  deploy:
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    needs: [buildImage]
-    steps:
-      # Checks out the repository this file is in
-      - uses: actions/checkout@v4
-
-      # Logs in with your Azure credentials
-      - name: Azure login
-        uses: azure/login@v1.4.6
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      # Use kubelogin to configure your kubeconfig for Azure auth
-      - name: Set up kubelogin for non-interactive login
+      # kubelogin para autenticação não-interativa do AKS
+      - name: Set up kubelogin
         uses: azure/use-kubelogin@v1
         with:
-          kubelogin-version: 'v0.0.25'
+          kubelogin-version: "v0.0.25"
 
-      # Retrieves your Azure Kubernetes Service cluster's kubeconfig file
-      - name: Get K8s context
+      # Contexto do AKS (admin false)
+      - name: Get AKS context
         uses: azure/aks-set-context@v3
         with:
-          resource-group: ${{ env.RESOURCE_GROUP }}
-          cluster-name: ${{ env.CLUSTER_NAME }}
-          admin: 'false'
-          use-kubelogin: 'true'
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          admin: "false"
+          use-kubelogin: "true"
 
-      # Deploys application based on given manifest file
-      - name: Deploys application
+      # Deploy no Kubernetes
+      - name: Deploy manifests to AKS
         uses: Azure/k8s-deploy@v4
         with:
           action: deploy
           manifests: ${{ env.DEPLOYMENT_MANIFEST_PATH }}
           images: |
-            ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
