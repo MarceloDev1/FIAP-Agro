@@ -8,10 +8,8 @@ on:
 env:
   # Nome da imagem (ajuste para o seu)
   CONTAINER_NAME: "fiapagro"
-
+  
   # Caminho do(s) manifest(s) (ajuste para o seu repo)
-  # Exemplo 1: "k8s/11-property.yaml"
-  # Exemplo 2: "k8s/*.yaml"
   DEPLOYMENT_MANIFEST_PATH: |
     k8s/00-namespace.yaml
     k8s/01-sqlserver.yaml
@@ -65,6 +63,20 @@ jobs:
           admin: "false"
           use-kubelogin: "true"
 
+      # Validação dos manifests antes do deploy
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "Validating Kubernetes manifests..."
+          while IFS= read -r manifest; do
+            [ -z "$manifest" ] && continue
+            echo "Validating: $manifest"
+            kubectl apply --dry-run=client -f "$manifest" || {
+              echo "❌ Validation failed for: $manifest"
+              exit 1
+            }
+          done <<< "${{ env.DEPLOYMENT_MANIFEST_PATH }}"
+          echo "✅ All manifests validated successfully"
+
       # Deploy no Kubernetes
       - name: Deploy manifests to AKS
         uses: Azure/k8s-deploy@v4
@@ -73,3 +85,22 @@ jobs:
           manifests: ${{ env.DEPLOYMENT_MANIFEST_PATH }}
           images: |
             ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+
+      # Verificação do status do deployment
+      - name: Verify deployment status
+        run: |
+          echo "Waiting for deployments to be ready..."
+          kubectl rollout status deployment -n default --timeout=5m || {
+            echo "⚠️ Some deployments are not ready yet. Checking pod status..."
+            kubectl get pods -n default
+            kubectl get events -n default --sort-by='.lastTimestamp'
+            exit 1
+          }
+          echo "✅ All deployments are healthy"
+
+      # Logout do Azure
+      - name: Azure logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
