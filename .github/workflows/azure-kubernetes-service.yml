@@ -6,13 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  # Nome da imagem (ajuste para o seu)
   CONTAINER_NAME: "fiapagro"
 
-  # Caminho do(s) manifest(s) (ajuste para o seu repo)
-  # Exemplo 1: "k8s/11-property.yaml"
-  # Exemplo 2: "k8s/*.yaml"
-  DEPLOYMENT_MANIFEST_PATH: |
+  # Lista de manifests (um por linha) - isso aqui funciona bem com k8s-deploy@v4
+  DEPLOYMENT_MANIFESTS: |
     k8s/00-namespace.yaml
     k8s/01-sqlserver.yaml
     k8s/02-rabbitmq.yaml
@@ -22,6 +19,9 @@ env:
     k8s/12-ingestion.yaml
     k8s/13-alertapi.yaml
     k8s/14-alertworker.yaml
+
+  # Namespace que seus YAMLs usam
+  K8S_NAMESPACE: "fiap-agro"
 
 jobs:
   build_and_deploy:
@@ -34,29 +34,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Login no Azure usando o JSON do Service Principal
       - name: Azure login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # (Opcional) Mostrar infos úteis no log
+      - name: Show Azure account
+        run: |
+          az account show -o table
+          az acr show -n ${{ secrets.ACR_NAME }} -g ${{ secrets.RESOURCE_GROUP }} -o table
 
       # Build e push da imagem no ACR
       - name: Build and push image to ACR
         run: |
           echo "Building and pushing to ACR..."
           az acr build \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }} \
+            --image ${{ env.CONTAINER_NAME }}:${{ github.sha }} \
             --registry ${{ secrets.ACR_NAME }} \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
             .
 
-      # kubelogin para autenticação não-interativa do AKS
+          # Se seu Dockerfile NÃO está na raiz, use isso e ajuste:
+          # az acr build \
+          #   --image ${{ env.CONTAINER_NAME }}:${{ github.sha }} \
+          #   --registry ${{ secrets.ACR_NAME }} \
+          #   --resource-group ${{ secrets.RESOURCE_GROUP }} \
+          #   --file ./FIAP.Agro/Dockerfile \
+          #   ./FIAP.Agro
+
       - name: Set up kubelogin
         uses: azure/use-kubelogin@v1
         with:
           kubelogin-version: "v0.0.25"
 
-      # Contexto do AKS (admin false)
       - name: Get AKS context
         uses: azure/aks-set-context@v3
         with:
@@ -65,11 +76,43 @@ jobs:
           admin: "false"
           use-kubelogin: "true"
 
-      # Deploy no Kubernetes
+      # Validação (dry-run) - aplica no namespace correto
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "Validating manifests..."
+          while IFS= read -r manifest; do
+            [ -z "$manifest" ] && continue
+            echo "Validating: $manifest"
+            kubectl apply --dry-run=client -f "$manifest" -n ${{ env.K8S_NAMESPACE }} || {
+              echo "❌ Validation failed for: $manifest"
+              exit 1
+            }
+          done <<< "${{ env.DEPLOYMENT_MANIFESTS }}"
+          echo "✅ All manifests validated"
+
+      # Deploy com Azure/k8s-deploy FORÇANDO namespace fiap-agro (aqui resolve o "default")
       - name: Deploy manifests to AKS
         uses: Azure/k8s-deploy@v4
         with:
           action: deploy
-          manifests: ${{ env.DEPLOYMENT_MANIFEST_PATH }}
+          namespace: ${{ env.K8S_NAMESPACE }}
+          manifests: ${{ env.DEPLOYMENT_MANIFESTS }}
           images: |
             ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+
+      # Verificação do status
+      - name: Verify deployment status
+        run: |
+          echo "Checking resources in namespace ${{ env.K8S_NAMESPACE }}..."
+          kubectl get all -n ${{ env.K8S_NAMESPACE }}
+
+          echo "Waiting for deployments to be ready..."
+          # Se você tiver deployments com nomes específicos, coloque aqui.
+          # Exemplo: kubectl rollout status deployment/property -n ${{ env.K8S_NAMESPACE }} --timeout=5m
+          kubectl get deploy -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Azure logout
+        if: always()
+        run: |
+          az logout
+          az cache purge
