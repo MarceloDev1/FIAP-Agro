@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34408.163
@@ -12,6 +12,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FIAP.Agro.Alert", "FIAP.Agro.Alert\FIAP.Agro.Alert.csproj", "{00DC1688-4A8C-49DD-B3F2-A267AD44EC75}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIAP.Agro.AlertWorker", "AlertWorker\FIAP.Agro.AlertWorker.csproj", "{FF78E5AA-ECDF-4000-9EE0-B85400D384D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIAP.Agro.Identity.Tests", "FIAP.Agro.Identity.Tests\FIAP.Agro.Identity.Tests.csproj", "{7E8C4C32-7D7F-4A9B-A7D9-0C9B62E7F1A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIAP.Agro.Alert.Tests", "FIAP.Agro.Alert.Tests\FIAP.Agro.Alert.Tests.csproj", "{E5B8E30C-AB3E-4B85-9F19-5A6CF1C1D5A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIAP.Agro.Property.Tests", "FIAP.Agro.Property.Tests\FIAP.Agro.Property.Tests.csproj", "{C1F0E7D2-8C36-4C3A-92FB-8F4A58E92B63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIAP.Agro.Ingestion.Tests", "FIAP.Agro.Ingestion.Tests\FIAP.Agro.Ingestion.Tests.csproj", "{D2B9E4A5-4737-4E15-9F9D-1E5AD1F0C4F8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertWorker.Tests", "AlertWorker.Tests\AlertWorker.Tests.csproj", "{A9C4DE71-8D3F-4B32-A8F5-4F0B8C9D2A11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +49,26 @@ Global
 		{FF78E5AA-ECDF-4000-9EE0-B85400D384D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF78E5AA-ECDF-4000-9EE0-B85400D384D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF78E5AA-ECDF-4000-9EE0-B85400D384D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E8C4C32-7D7F-4A9B-A7D9-0C9B62E7F1A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E8C4C32-7D7F-4A9B-A7D9-0C9B62E7F1A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E8C4C32-7D7F-4A9B-A7D9-0C9B62E7F1A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E8C4C32-7D7F-4A9B-A7D9-0C9B62E7F1A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5B8E30C-AB3E-4B85-9F19-5A6CF1C1D5A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5B8E30C-AB3E-4B85-9F19-5A6CF1C1D5A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5B8E30C-AB3E-4B85-9F19-5A6CF1C1D5A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5B8E30C-AB3E-4B85-9F19-5A6CF1C1D5A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1F0E7D2-8C36-4C3A-92FB-8F4A58E92B63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1F0E7D2-8C36-4C3A-92FB-8F4A58E92B63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1F0E7D2-8C36-4C3A-92FB-8F4A58E92B63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1F0E7D2-8C36-4C3A-92FB-8F4A58E92B63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2B9E4A5-4737-4E15-9F9D-1E5AD1F0C4F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2B9E4A5-4737-4E15-9F9D-1E5AD1F0C4F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2B9E4A5-4737-4E15-9F9D-1E5AD1F0C4F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2B9E4A5-4737-4E15-9F9D-1E5AD1F0C4F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9C4DE71-8D3F-4B32-A8F5-4F0B8C9D2A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9C4DE71-8D3F-4B32-A8F5-4F0B8C9D2A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9C4DE71-8D3F-4B32-A8F5-4F0B8C9D2A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9C4DE71-8D3F-4B32-A8F5-4F0B8C9D2A11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
