@@ -7,6 +7,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace FIAP.Agro.AlertWorker.Tests;
@@ -16,7 +20,10 @@ public class SensorReadingConsumerTests
     private static ServiceProvider CreateServiceProvider()
     {
         var services = new ServiceCollection();
-        services.AddDbContext<AlertDbContext>(_ => _.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        IServiceCollection serviceCollection = services.AddDbContext<AlertDbContext>(static _ =>
+        {
+            _.UseInMemoryDatabase(Guid.NewGuid().ToString());
+        });
         return services.BuildServiceProvider();
     }
 
@@ -49,4 +56,3 @@ public class SensorReadingConsumerTests
         db.Alerts.Should().ContainSingle(a => a.FieldId == evt.FieldId && a.Status == "Open");
     }
 }
-

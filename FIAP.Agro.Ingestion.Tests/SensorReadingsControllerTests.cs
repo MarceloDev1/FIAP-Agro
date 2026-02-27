@@ -6,6 +6,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace FIAP.Agro.Ingestion.Tests;

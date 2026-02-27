@@ -1,5 +1,7 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Agro.Property.Api.Controllers;
 using FIAP.Agro.Property.Application.DTOs;
 using FIAP.Agro.Property.Infrastructure.Data;

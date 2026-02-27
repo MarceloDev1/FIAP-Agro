@@ -4,6 +4,9 @@ using FIAP.Agro.Alert.Infrastructure.Data;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace FIAP.Agro.Alert.Tests;
