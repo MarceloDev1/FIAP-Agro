@@ -40,55 +40,58 @@ jobs:
           az account show -o table
           az acr show -n ${{ secrets.ACR_NAME }} -g ${{ secrets.RESOURCE_GROUP }} -o table
 
-      - name: Build identity image
-        run: |
-          az acr build \
-            --image fiap-agro/identity:${{ github.sha }} \
-            --image fiap-agro/identity:latest \
-            --registry ${{ secrets.ACR_NAME }} \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --file FIAP.Agro.Identity/Dockerfile \
-            .
+      - name: ACR login (docker)
+        run: az acr login --name ${{ secrets.ACR_NAME }}
 
-      - name: Build property image
+      - name: Build and push identity image
         run: |
-          az acr build \
-            --image fiap-agro/property:${{ github.sha }} \
-            --image fiap-agro/property:latest \
-            --registry ${{ secrets.ACR_NAME }} \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --file FIAP.Agro.Property/Dockerfile \
+          docker build \
+            -f FIAP.Agro.Identity/Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/identity:${{ github.sha }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/identity:latest \
             .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/identity:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/identity:latest
 
-      - name: Build ingestion image
+      - name: Build and push property image
         run: |
-          az acr build \
-            --image fiap-agro/ingestion:${{ github.sha }} \
-            --image fiap-agro/ingestion:latest \
-            --registry ${{ secrets.ACR_NAME }} \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --file FIAP.Agro.Ingestion/Dockerfile \
+          docker build \
+            -f FIAP.Agro.Property/Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/property:${{ github.sha }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/property:latest \
             .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/property:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/property:latest
 
-      - name: Build alert-api image
+      - name: Build and push ingestion image
         run: |
-          az acr build \
-            --image fiap-agro/alert-api:${{ github.sha }} \
-            --image fiap-agro/alert-api:latest \
-            --registry ${{ secrets.ACR_NAME }} \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --file FIAP.Agro.Alert/Dockerfile \
+          docker build \
+            -f FIAP.Agro.Ingestion/Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/ingestion:${{ github.sha }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/ingestion:latest \
             .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/ingestion:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/ingestion:latest
 
-      - name: Build alert-worker image
+      - name: Build and push alert-api image
         run: |
-          az acr build \
-            --image fiap-agro/alert-worker:${{ github.sha }} \
-            --image fiap-agro/alert-worker:latest \
-            --registry ${{ secrets.ACR_NAME }} \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --file AlertWorker/Dockerfile \
+          docker build \
+            -f FIAP.Agro.Alert/Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-api:${{ github.sha }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-api:latest \
             .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-api:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-api:latest
+
+      - name: Build and push alert-worker image
+        run: |
+          docker build \
+            -f AlertWorker/Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-worker:${{ github.sha }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-worker:latest \
+            .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-worker:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-worker:latest
 
       - name: Set up kubelogin
         uses: azure/use-kubelogin@v1
