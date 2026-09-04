@@ -1,8 +1,7 @@
-﻿################################################################################
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs
 /.vs
 /AlertWorker/bin/Debug/net8.0
 /AlertWorker/obj
@@ -15,3 +14,18 @@
 /FIAP.Agro.Ingestion/bin/Debug/net8.0
 /FIAP.Agro.Property/bin/Debug/net8.0
 /FIAP.Agro.Property/obj
+
+# Build artifacts (all bin/obj)
+**/bin/
+**/obj/
+
+# Visual Studio user files
+*.slnLaunch.user
+*.csproj.user
+
+# Local tools
+kind.exe
+
+# Sensitive files - NEVER commit
+azure-credentials.json
+acr-name.txt

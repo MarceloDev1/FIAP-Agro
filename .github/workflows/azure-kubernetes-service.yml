@@ -1,4 +1,4 @@
-name: Build and deploy an app to AKS
+name: Build and deploy FIAP.Agro to AKS
 
 on:
   push:
@@ -6,9 +6,8 @@ on:
   workflow_dispatch:
 
 env:
-  CONTAINER_NAME: "fiapagro"
+  K8S_NAMESPACE: "fiap-agro"
 
-  # Lista de manifests (um por linha) - isso aqui funciona bem com k8s-deploy@v4
   DEPLOYMENT_MANIFESTS: |
     k8s/00-namespace.yaml
     k8s/01-sqlserver.yaml
@@ -19,9 +18,6 @@ env:
     k8s/12-ingestion.yaml
     k8s/13-alertapi.yaml
     k8s/14-alertworker.yaml
-
-  # Namespace que seus YAMLs usam
-  K8S_NAMESPACE: "fiap-agro"
 
 jobs:
   build_and_deploy:
@@ -39,29 +35,60 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # (Opcional) Mostrar infos úteis no log
       - name: Show Azure account
         run: |
           az account show -o table
           az acr show -n ${{ secrets.ACR_NAME }} -g ${{ secrets.RESOURCE_GROUP }} -o table
 
-      # Build e push da imagem no ACR
-      - name: Build and push image to ACR
+      - name: Build identity image
         run: |
-          echo "Building and pushing to ACR..."
           az acr build \
-            --image ${{ env.CONTAINER_NAME }}:${{ github.sha }} \
+            --image fiap-agro/identity:${{ github.sha }} \
+            --image fiap-agro/identity:latest \
             --registry ${{ secrets.ACR_NAME }} \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --file FIAP.Agro.Identity/Dockerfile \
             .
 
-          # Se seu Dockerfile NÃO está na raiz, use isso e ajuste:
-          # az acr build \
-          #   --image ${{ env.CONTAINER_NAME }}:${{ github.sha }} \
-          #   --registry ${{ secrets.ACR_NAME }} \
-          #   --resource-group ${{ secrets.RESOURCE_GROUP }} \
-          #   --file ./FIAP.Agro/Dockerfile \
-          #   ./FIAP.Agro
+      - name: Build property image
+        run: |
+          az acr build \
+            --image fiap-agro/property:${{ github.sha }} \
+            --image fiap-agro/property:latest \
+            --registry ${{ secrets.ACR_NAME }} \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --file FIAP.Agro.Property/Dockerfile \
+            .
+
+      - name: Build ingestion image
+        run: |
+          az acr build \
+            --image fiap-agro/ingestion:${{ github.sha }} \
+            --image fiap-agro/ingestion:latest \
+            --registry ${{ secrets.ACR_NAME }} \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --file FIAP.Agro.Ingestion/Dockerfile \
+            .
+
+      - name: Build alert-api image
+        run: |
+          az acr build \
+            --image fiap-agro/alert-api:${{ github.sha }} \
+            --image fiap-agro/alert-api:latest \
+            --registry ${{ secrets.ACR_NAME }} \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --file FIAP.Agro.Alert/Dockerfile \
+            .
+
+      - name: Build alert-worker image
+        run: |
+          az acr build \
+            --image fiap-agro/alert-worker:${{ github.sha }} \
+            --image fiap-agro/alert-worker:latest \
+            --registry ${{ secrets.ACR_NAME }} \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --file AlertWorker/Dockerfile \
+            .
 
       - name: Set up kubelogin
         uses: azure/use-kubelogin@v1
@@ -76,7 +103,6 @@ jobs:
           admin: "false"
           use-kubelogin: "true"
 
-      # Validação (dry-run) - aplica no namespace correto
       - name: Validate Kubernetes manifests
         run: |
           echo "Validating manifests..."
@@ -84,13 +110,12 @@ jobs:
             [ -z "$manifest" ] && continue
             echo "Validating: $manifest"
             kubectl apply --dry-run=client -f "$manifest" -n ${{ env.K8S_NAMESPACE }} || {
-              echo "❌ Validation failed for: $manifest"
+              echo "Validation failed for: $manifest"
               exit 1
             }
           done <<< "${{ env.DEPLOYMENT_MANIFESTS }}"
-          echo "✅ All manifests validated"
+          echo "All manifests validated"
 
-      # Deploy com Azure/k8s-deploy FORÇANDO namespace fiap-agro (aqui resolve o "default")
       - name: Deploy manifests to AKS
         uses: Azure/k8s-deploy@v4
         with:
@@ -98,18 +123,26 @@ jobs:
           namespace: ${{ env.K8S_NAMESPACE }}
           manifests: ${{ env.DEPLOYMENT_MANIFESTS }}
           images: |
-            ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/identity:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/property:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/ingestion:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-api:${{ github.sha }}
+            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-worker:${{ github.sha }}
 
-      # Verificação do status
       - name: Verify deployment status
         run: |
-          echo "Checking resources in namespace ${{ env.K8S_NAMESPACE }}..."
+          echo "Resources in namespace ${{ env.K8S_NAMESPACE }}:"
           kubectl get all -n ${{ env.K8S_NAMESPACE }}
 
           echo "Waiting for deployments to be ready..."
-          # Se você tiver deployments com nomes específicos, coloque aqui.
-          # Exemplo: kubectl rollout status deployment/property -n ${{ env.K8S_NAMESPACE }} --timeout=5m
-          kubectl get deploy -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/identity-api      -n ${{ env.K8S_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/property-api      -n ${{ env.K8S_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/ingestion-api     -n ${{ env.K8S_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/alert-api         -n ${{ env.K8S_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/alert-worker      -n ${{ env.K8S_NAMESPACE }} --timeout=5m
+
+          echo "Final pod status:"
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
 
       - name: Azure logout
         if: always()

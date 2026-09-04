@@ -16,6 +16,14 @@ spec:
       containers:
         - name: alert-worker
           image: fiap-agro/alert-worker:1.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "80Mi"
+              cpu: "50m"
+            limits:
+              memory: "200Mi"
+              cpu: "250m"
           env:
             - name: ConnectionStrings__Default
               value: "Server=sqlserver,1433;Database=FIAPAgroAlert;User Id=sa;Password=FiapAgro2026@;TrustServerCertificate=True;Encrypt=False;"

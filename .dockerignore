@@ -1,0 +1,15 @@
+**/bin
+**/obj
+**/.vs
+**/*.user
+**/node_modules
+.git
+.github
+.vs
+*.md
+docker-compose*.yml
+Dockerfile
+k8s
+kind-config.yaml
+prometheus.yml
+*.sh

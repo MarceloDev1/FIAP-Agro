@@ -10,13 +10,13 @@ using OpenTelemetry.Metrics;
 var builder = WebApplication.CreateBuilder(args);
 
 var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new Exception("Jwt:Key não configurado no appsettings.json");
+    ?? throw new Exception("Jwt:Key nï¿½o configurado no appsettings.json");
 
 // DB
 builder.Services.AddDbContext<AlertDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// Auth (uma vez só!)
+// Auth (uma vez sï¿½!)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
@@ -46,7 +46,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger (uma vez só, já com Bearer)
+// Swagger (uma vez sï¿½, jï¿½ com Bearer)
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FIAP.Agro.Alert", Version = "v1" });
@@ -78,6 +78,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AlertDbContext>();
+    db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {

@@ -48,6 +48,15 @@ spec:
                 secretKeyRef:
                   name: sqlserver-secret
                   key: SA_PASSWORD
+            - name: MSSQL_MEMORY_LIMIT_MB
+              value: "1500"
+          resources:
+            requests:
+              memory: "1500Mi"
+              cpu: "300m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
           volumeMounts:
             - name: mssql-data
               mountPath: /var/opt/mssql

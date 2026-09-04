@@ -10,4 +10,11 @@ builder.Services.AddDbContext<AlertDbContext>(opt =>
 builder.Services.AddHostedService<SensorReadingConsumer>();
 
 var host = builder.Build();
+
+using (var scope = host.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AlertDbContext>();
+    db.Database.Migrate();
+}
+
 host.Run();

@@ -13,7 +13,7 @@ builder.Services.AddDbContext<IngestionDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 // JWT (igual Identity/Property)
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("Jwt:Key não configurado.");
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("Jwt:Key nï¿½o configurado.");
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -70,6 +70,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<IngestionDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
