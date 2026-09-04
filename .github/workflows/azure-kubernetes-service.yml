@@ -106,6 +106,18 @@ jobs:
           admin: "false"
           use-kubelogin: "true"
 
+      - name: Substitute image names in manifests
+        run: |
+          ACR="${{ secrets.ACR_NAME }}.azurecr.io"
+          SHA="${{ github.sha }}"
+          sed -i "s|image: fiap-agro/identity:1.0|image: ${ACR}/fiap-agro/identity:${SHA}|g" k8s/10-identity.yaml
+          sed -i "s|image: fiap-agro/property:1.0|image: ${ACR}/fiap-agro/property:${SHA}|g" k8s/11-property.yaml
+          sed -i "s|image: fiap-agro/ingestion:1.0|image: ${ACR}/fiap-agro/ingestion:${SHA}|g" k8s/12-ingestion.yaml
+          sed -i "s|image: fiap-agro/alert-api:1.0|image: ${ACR}/fiap-agro/alert-api:${SHA}|g" k8s/13-alertapi.yaml
+          sed -i "s|image: fiap-agro/alert-worker:1.0|image: ${ACR}/fiap-agro/alert-worker:${SHA}|g" k8s/14-alertworker.yaml
+          echo "=== Imagens depois da substituicao ==="
+          grep -h "image:" k8s/10-identity.yaml k8s/11-property.yaml k8s/12-ingestion.yaml k8s/13-alertapi.yaml k8s/14-alertworker.yaml
+
       - name: Validate Kubernetes manifests
         run: |
           echo "Validating manifests..."
@@ -125,12 +137,6 @@ jobs:
           action: deploy
           namespace: ${{ env.K8S_NAMESPACE }}
           manifests: ${{ env.DEPLOYMENT_MANIFESTS }}
-          images: |
-            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/identity:${{ github.sha }}
-            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/property:${{ github.sha }}
-            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/ingestion:${{ github.sha }}
-            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-api:${{ github.sha }}
-            ${{ secrets.ACR_NAME }}.azurecr.io/fiap-agro/alert-worker:${{ github.sha }}
 
       - name: Verify deployment status
         run: |
